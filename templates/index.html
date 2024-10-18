@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resenhazap</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        #top-bar {
+            background-color: #075E54;
+            color: #FFF;
+            padding: 10px;
+            text-align: center;
+        }
+
+        #chat-container {
+            padding: 10px;
+            height: calc(100vh - 150px);
+            overflow-y: scroll;
+            display: none; /* Esconde o chat inicialmente */
+        }
+
+        #chat-container p {
+            background-color: #c2d1b7;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        #input-container {
+            display: flex;
+            align-items: center;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #F4F4F4;
+            padding: 10px;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+            display: none; /* Esconde o input inicialmente */
+        }
+
+        #input-container input[type="text"] {
+            padding: 10px;
+            border: none;
+            outline: none;
+            flex: 1;
+        }
+
+        #input-container input#mensagem {
+            flex: 1240px;
+        }
+
+        #input-container button {
+            padding: 10px 20px;
+            background-color: #075E54;
+            color: #FFF;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        /* Estilo do Popup */
+        #login-popup {
+            display: none; /* Inicialmente escondido */
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        #overlay {
+            display: none; /* Inicialmente escondido */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.1/socket.io.js" integrity="sha512-Z6C1p1NIexPj5MsVUunW4pg7uMX6/TT3CUVldmjXx2kpip1eZcrAnxIusDxyFIikyM9A61zOVNgvLr/TGudOQg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js" integrity="sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+    <div id="top-bar">
+        <h1>Resenhazap</h1>
+    </div>
+
+    <div id="overlay"></div> <!-- Sobreposição do Popup -->
+
+    <div id="login-popup">
+        <h2>Login</h2>
+        <input type="text" id="usuario" placeholder="Nome de Usuário" required>
+        <button id="login-button">Entrar</button>
+    </div>
+
+    <div id="chat-container">
+        <p>Welcome to Resenhazap!</p>
+    </div>
+
+    <div id="input-container">
+        <input type="text" id="mensagem" placeholder="Mensagem" required>
+        <button id="botao">Enviar</button>
+    </div>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var socket = io("http://localhost:5000");
+            var usuarioNome = "";
+
+            // Mostrar popup de login
+            $("#login-popup").css("display", "block");
+            $("#overlay").css("display", "block");
+
+            // Função para entrar no chat
+            function entrarNoChat() {
+                usuarioNome = $("#usuario").val();
+                if (usuarioNome) {
+                    $("#login-popup").hide();
+                    $("#overlay").hide();
+                    $("#chat-container").show();
+                    $("#input-container").show();
+                }
+            }
+
+            // Evento de clique no botão de login
+            $("#login-button").on("click", entrarNoChat);
+
+            // Evento de pressionar a tecla Enter no campo de nome de usuário
+            $("#usuario").on("keypress", function(event) {
+                if (event.key === "Enter") {
+                    entrarNoChat();
+                }
+            });
+
+            socket.on("connect", function() {
+                console.log("conectou");
+            });
+
+            socket.on("message", function(data) {
+                console.log("enviou mensagem");
+                $("#chat-container").append($('<p>').text(data));
+                $("#chat-container").scrollTop($("#chat-container")[0].scrollHeight);
+            });
+
+            $("#botao").on('click', function() {
+                console.log("clicou botao");
+                socket.send(usuarioNome + ": " + $('#mensagem').val());
+                $('#mensagem').val('');
+            });
+
+            $("#mensagem").on('keypress', function(event) {
+                if (event.key === "Enter") {
+                    console.log("deu enter");
+                    socket.send(usuarioNome + ": " + $('#mensagem').val());
+                    $('#mensagem').val('');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
